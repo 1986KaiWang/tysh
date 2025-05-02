@@ -21,15 +21,40 @@
   headerToggleBtn.addEventListener('click', headerToggle);
 
   /**
-   * Hide mobile nav on same-page/hash links
+   * Hide mobile nav on same-page/hash links and prevent default behavior
    */
   document.querySelectorAll('#navmenu a').forEach(navmenu => {
-    navmenu.addEventListener('click', () => {
+    navmenu.addEventListener('click', (e) => {
+      // 阻止默認的錨點行為
+      e.preventDefault();
+      
+      // 獲取目標section的id (去掉#符號)
+      const targetId = navmenu.getAttribute('href').substring(1);
+      const targetSection = document.getElementById(targetId);
+      
+      // 如果找到目標section，滾動到該位置
+      if (targetSection) {
+        // 計算滾動位置，考慮到頂部固定導航的高度
+        const scrollMarginTop = getComputedStyle(targetSection).scrollMarginTop;
+        const scrollPosition = targetSection.offsetTop - parseInt(scrollMarginTop || 0);
+        
+        // 平滑滾動到目標位置
+        window.scrollTo({
+          top: scrollPosition,
+          behavior: 'smooth'
+        });
+        
+        // 更新URL，但不添加#hash (使用HTML5 History API)
+        if (history.pushState) {
+          history.pushState(null, null, window.location.pathname);
+        }
+      }
+      
+      // 如果是移動端，關閉導航菜單
       if (document.querySelector('.header-show')) {
         headerToggle();
       }
     });
-
   });
 
   /**
@@ -70,6 +95,11 @@
       top: 0,
       behavior: 'smooth'
     });
+    
+    // 更新URL，移除任何hash
+    if (history.pushState) {
+      history.pushState(null, null, window.location.pathname);
+    }
   });
 
   window.addEventListener('load', toggleScrollTop);
@@ -202,6 +232,7 @@
 
   /**
    * Correct scrolling position upon page load for URLs containing hash links.
+   * 修改為使用History API而不是保留hash
    */
   window.addEventListener('load', function(e) {
     if (window.location.hash) {
@@ -210,9 +241,14 @@
           let section = document.querySelector(window.location.hash);
           let scrollMarginTop = getComputedStyle(section).scrollMarginTop;
           window.scrollTo({
-            top: section.offsetTop - parseInt(scrollMarginTop),
+            top: section.offsetTop - parseInt(scrollMarginTop || 0),
             behavior: 'smooth'
           });
+          
+          // 移除URL中的hash
+          if (history.pushState) {
+            history.pushState(null, null, window.location.pathname);
+          }
         }, 100);
       }
     }
