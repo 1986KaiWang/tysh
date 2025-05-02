@@ -219,24 +219,48 @@
   });
 
   /**
-   * Navmenu Scrollspy
+   * Navmenu Scrollspy - 改進版本
    */
-  let navmenulinks = document.querySelectorAll('.navmenu a');
-
   function navmenuScrollspy() {
-    navmenulinks.forEach(navmenulink => {
-      if (!navmenulink.hash) return;
-      let section = document.querySelector(navmenulink.hash);
-      if (!section) return;
-      let position = window.scrollY + 200;
-      if (position >= section.offsetTop && position <= (section.offsetTop + section.offsetHeight)) {
-        document.querySelectorAll('.navmenu a.active').forEach(link => link.classList.remove('active'));
-        navmenulink.classList.add('active');
-      } else {
-        navmenulink.classList.remove('active');
+    // 獲取所有section元素
+    const sections = document.querySelectorAll('section[id]');
+    
+    // 當前滾動位置 (加上一個偏移量，使導航項目在section進入視窗前就被激活)
+    const scrollPosition = window.scrollY + window.innerHeight / 3;
+    
+    // 找到當前在視窗中最靠近頂部的section
+    let currentSection = null;
+    let minDistance = Number.MAX_VALUE;
+    
+    sections.forEach(section => {
+      // 計算section頂部到當前滾動位置的距離
+      const sectionTop = section.offsetTop;
+      const distance = Math.abs(sectionTop - scrollPosition);
+      
+      // 如果section已經進入視窗且距離比之前找到的section更近
+      if (scrollPosition >= sectionTop && distance < minDistance) {
+        minDistance = distance;
+        currentSection = section;
       }
-    })
+    });
+    
+    // 如果沒有找到任何section (可能是在頁面頂部)，則選擇第一個section
+    if (!currentSection && sections.length > 0) {
+      currentSection = sections[0];
+    }
+    
+    // 更新導航菜單的活動狀態
+    if (currentSection) {
+      const currentId = currentSection.getAttribute('id');
+      document.querySelectorAll('.navmenu a').forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === `#${currentId}`) {
+          link.classList.add('active');
+        }
+      });
+    }
   }
+  
   window.addEventListener('load', navmenuScrollspy);
   document.addEventListener('scroll', navmenuScrollspy);
 
